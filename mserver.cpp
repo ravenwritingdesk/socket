@@ -11,7 +11,7 @@ using namespace std;
 #include<sys/shm.h>
 #include<unistd.h>
 #define BUFMAX 1024
-#define FILENAME "record.txt"
+#define FILENAME "record.txt"//聊天记录保存文件
 #define SERVER_PORT 8000
 #define LENGTH_OF_LISTEN_QUEUE 20
 #define BUFFER_SIZE 1024
@@ -107,7 +107,7 @@ void root_usr(int connectfd)  // root 用户
 		if(ret<=0)
 		return;
 		len=ntohl(pack.len);
-		ret=read(connectfd,&pack.name,len+16);
+		ret=read(connectfd,&pack.name,len+16);//read
 		if(ret<=0)
 		return;
         if( strlen(pack.buf)!=1 )
@@ -117,7 +117,7 @@ void root_usr(int connectfd)  // root 用户
 		{
 			case  '1' :
 				   {
-					 FILE *fp=fopen(FILENAME,"rb");
+					 FILE *fp=fopen(FILENAME,"rb");//打开聊天记录文件
 					 fseek(fp,0,SEEK_END);
 					 int size=ftell(fp);
 					 fseek(fp,0,SEEK_SET);
@@ -126,7 +126,7 @@ void root_usr(int connectfd)  // root 用户
 					 if(ret!=1)
 					  cout<<"size  不等于  ret"<<endl;
  
-					 strcpy(pack.buf,"*********消息记录******\n\n");
+					 strcpy(pack.buf,"*********消息记录******\n\n");//逐行输出消息记录
 					 len=strlen(pack.buf)+1;
 					 pack.len=htonl(len);
 					 writen(connectfd,&pack,len+20);
@@ -141,7 +141,7 @@ void root_usr(int connectfd)  // root 用户
  
 			case '2':
 				   {
-				   		FILE *fp=fopen(FILENAME,"w");
+				   		FILE *fp=fopen(FILENAME,"w");//删除消息记录
 						fclose(fp);
 				   }
 			default :
@@ -152,21 +152,22 @@ void root_usr(int connectfd)  // root 用户
 	}
  
 }
+//菜单设计
 void menu()
 {
 
 	cout<<"--------------------------MENU--------------------------"<<endl;
 	cout<<endl;
 	cout<<"                      1 创建聊天室                       "<<endl;
-	cout<<"                      2 开启文件上传                    "<<endl;
+	cout<<"                      2 开启文件下载                   "<<endl;
 	cout<<"                      3 退出                            "<<endl;
 	cout<<endl;
 	cout<<"--------------------------------------------------------"<<endl;
 }
-//主函数
+//聊天室函数模块设计
 void chatroom()
 {
-	cout<<"运行程序"<<endl;
+	cout<<"聊天房间已设置，等待设置共享内存..."<<endl;
 	FILE *fp;
 	fp=fopen(FILENAME,"rb");//打开聊天记录文件
 	if(fp==NULL)
@@ -185,7 +186,7 @@ void chatroom()
 	shm = shmat(shmid,  (void*)0, 0);
 	memset(shm,0,sizeof(packet));//共享内存格式化
 	if(shm!=(void *)-1)
-		cout<<"共享内存格式化成功"<<endl;
+		cout<<"共享内存格式化成功，等待用户加入聊天房间..."<<endl;
 	pack=(struct packet *)shmat(shmid,  (void*)0, 0);
 	if(pack==(void *)-1)
 	     cout<<"shmat失败"<<endl;
@@ -227,9 +228,9 @@ void chatroom()
 			}
 			cout<<objname<<" 已进入聊天室"<<endl;
 			pid=fork();
-			if(pid>0)  //父进程 接受数据
+			if(pid>0)  //父进程 接受数据，并把消息随时写入记录之中
 			{
-				pack=(struct packet *)shmat(shmid,  (void*)0, 0);
+				pack=(struct packet *)shmat(shmid,  (void*)0, 0);//shmat
 			    if(pack==(void *)-1)
 				      cout<<"shmat失败"<<endl;
  
@@ -241,7 +242,7 @@ void chatroom()
 					num=readn(connectfd,pack->name,nlen+16);
                                         test(pid,num);
  
-					cout<<pack->name<<" : "<<pack->buf<<endl;
+					cout<<pack->name<<" : "<<pack->buf<<endl;//输出用户：消息格式来实现聊天
 					 fp=fopen(FILENAME,"ab");
 				     if(fp==NULL)
 					 cout<<"历史记录txt打开失败"<<endl;
@@ -277,11 +278,11 @@ void chatroom()
 					nlen=strlen(pack->buf)+1;	//  有'\0'
 					int zz=write(connectfd,pack,nlen+20);
 					if(zz<=0)
-					cout<<"************write 失败 ***"<<endl;
+					cout<<"************write 失败 ***"<<endl;//写入消息记录失败
 				}
 			}		
 			else
-				cout<<"2pid错误"<<endl;
+				cout<<"pid错误"<<endl;//特殊情况处理
 			exit(0);
 			
 		
@@ -289,7 +290,7 @@ void chatroom()
 		}
 		else if(pid>1)	//父进程 继续监听
 			close(connectfd);
-		else
+		else//特殊情况处理
 		{
 			cout<<"1pid错误"<<endl;
 			exit(0);
@@ -298,7 +299,7 @@ void chatroom()
 }
 void load()
 {
-	cout<<"sorry,暂未完善，敬请等待"<<endl;
+	cout<<"已打开下载通道，等待用户请求..."<<endl;
 	    // 声明并初始化一个服务器端的socket地址结构
     struct sockaddr_in server_addr;
     bzero(&server_addr, sizeof(server_addr));
@@ -394,24 +395,24 @@ void load()
 }
 int main()
 {   
-   	int a;
+   	int a;//option
 
 
-    while(1){
+    while(1){//while 使程序可以反复调用
 		menu();
 		cout<<"option: ";
   	    cin>>a;
         switch (a)
 		{
-		case 1:chatroom();
+		case 1:chatroom();//聊天室
 			break;
-		case 2:load();
+		case 2:load();//文件上传
 			break;
 		case 3:
 		    cout<<"程序退出"<<endl;
-		   return 0;
+		    return 0;
 		default:
-			cout<<"sorry,worry selection"<<endl;
+			cout<<"sorry,worry selection"<<endl;//特殊情况处理
 			break;
 		}
 	}
